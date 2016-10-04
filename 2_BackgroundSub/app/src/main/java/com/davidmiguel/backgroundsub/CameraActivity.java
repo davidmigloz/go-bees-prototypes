@@ -13,7 +13,7 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import com.davidmiguel.backgroundsub.utils.VideoProcessor;
-import com.davidmiguel.backgroundsub.utils.backgroundProcessors.SimpleSubtraction;
+import com.davidmiguel.backgroundsub.utils.bgsubtractors.MOG2Subtractor;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -215,7 +215,7 @@ public class CameraActivity extends AppCompatActivity
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-        videoProcessor = new SimpleSubtraction(width, height);
+        videoProcessor = new MOG2Subtractor();
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.davidmiguel.backgroundsub.utils.backgroundProcessors;
+package com.davidmiguel.backgroundsub.utils.bgsubtractors;
 
 import com.davidmiguel.backgroundsub.utils.VideoProcessor;
 
@@ -8,14 +8,14 @@ import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 
 /**
- * Implement simple subtraction background subtractor.
+ * Implements frame differencing background subtractor.
  */
 
-public class SimpleSubtraction implements VideoProcessor {
+public class FrameDifferencing implements VideoProcessor {
     private Mat previous;
     private Mat difference;
 
-    public SimpleSubtraction(int width, int height) {
+    public FrameDifferencing(int width, int height) {
         previous = new Mat(height, width, CvType.CV_8UC1, new Scalar(0));
         difference = new Mat(height, width, CvType.CV_8UC1, new Scalar(0));
     }
