@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">BackgroundSubtraction</string>
+    <string name="menu_next_camera">Next cam</string>
+    <string name="menu_image_size">Size</string>
+</resources>
