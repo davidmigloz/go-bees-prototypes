@@ -12,7 +12,11 @@ import android.view.SubMenu;
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.davidmiguel.backgroundsub.utils.NoneFilter;
 import com.davidmiguel.backgroundsub.utils.VideoProcessor;
+import com.davidmiguel.backgroundsub.utils.bgsubtractors.AverageBackground;
+import com.davidmiguel.backgroundsub.utils.bgsubtractors.FrameDifferencing;
+import com.davidmiguel.backgroundsub.utils.bgsubtractors.KNNSubtractor;
 import com.davidmiguel.backgroundsub.utils.bgsubtractors.MOG2Subtractor;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -38,33 +42,37 @@ public class CameraActivity extends AppCompatActivity
     private static final String STATE_CAMERA_INDEX = "cameraIndex";
     // Key for storing the index of the active image size
     private static final String STATE_IMAGE_SIZE_INDEX = "imageSizeIndex";
+    // Key for storing the background subtraction algorithm
+    private static final String STATE_BR_ALG_INDEX = "bgAlgIndex";
     // An ID for items in the image size submenu
     private static final int MENU_GROUP_ID_SIZE = 2;
     // Index of the active camera
-    private int mCameraIndex;
+    private int cameraIndex;
     // Index of the active image size
-    private int mImageSizeIndex;
+    private int imageSizeIndex;
+    // Index of the background subtraction algorithm
+    private int bgAlgIndex;
     // Whether the active camera is front-facing. If so, the camera view is mirrored
-    private boolean mIsCameraFrontFacing;
+    private boolean isCameraFrontFacing;
     // The number of cameras on the device
-    private int mNumCameras;
+    private int numCameras;
     // The camera view
-    private CameraBridgeViewBase mCameraView;
+    private CameraBridgeViewBase cameraView;
     // The image sizes supported by the active camera
-    private List<Size> mSupportedImageSizes;
+    private List<Size> supportedImageSizes;
     // Whether an asynchronous menu action is in progress. If so, menu interaction is disabled
-    private boolean mIsMenuLocked;
+    private boolean isMenuLocked;
     // To apply background subtraction
     private VideoProcessor videoProcessor;
     // OpenCV loader callback
-    private BaseLoaderCallback mLoaderCallback =
+    private BaseLoaderCallback loaderCallback =
             new BaseLoaderCallback(this) {
                 @Override
                 public void onManagerConnected(final int status) {
                     switch (status) {
                         case LoaderCallbackInterface.SUCCESS:
                             Log.d(TAG, "OpenCV loaded successfully");
-                            mCameraView.enableView();
+                            cameraView.enableView();
                             break;
                         default:
                             super.onManagerConnected(status);
@@ -86,28 +94,29 @@ public class CameraActivity extends AppCompatActivity
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // Load state info if exists
         if (savedInstanceState != null) {
-            mCameraIndex = savedInstanceState.getInt(STATE_CAMERA_INDEX, 0);
-            mImageSizeIndex = savedInstanceState.getInt(STATE_IMAGE_SIZE_INDEX, 0);
+            cameraIndex = savedInstanceState.getInt(STATE_CAMERA_INDEX, 0);
+            imageSizeIndex = savedInstanceState.getInt(STATE_IMAGE_SIZE_INDEX, 0);
+            bgAlgIndex = savedInstanceState.getInt(STATE_BR_ALG_INDEX, 0);
         } else {
-            mCameraIndex = 0;
-            mImageSizeIndex = 0;
+            cameraIndex = 0;
+            imageSizeIndex = 0;
         }
         // Get camera info
         final Camera camera;
         CameraInfo cameraInfo = new CameraInfo();
-        Camera.getCameraInfo(mCameraIndex, cameraInfo);
-        mIsCameraFrontFacing = (cameraInfo.facing == CameraInfo.CAMERA_FACING_FRONT);
-        mNumCameras = Camera.getNumberOfCameras();
-        camera = Camera.open(mCameraIndex);
+        Camera.getCameraInfo(cameraIndex, cameraInfo);
+        isCameraFrontFacing = (cameraInfo.facing == CameraInfo.CAMERA_FACING_FRONT);
+        numCameras = Camera.getNumberOfCameras();
+        camera = Camera.open(cameraIndex);
         final Camera.Parameters parameters = camera.getParameters();
         camera.release();
-        mSupportedImageSizes = parameters.getSupportedPreviewSizes();
-        final Size size = mSupportedImageSizes.get(mImageSizeIndex);
+        supportedImageSizes = parameters.getSupportedPreviewSizes();
+        final Size size = supportedImageSizes.get(imageSizeIndex);
         // Configure view
-        mCameraView = (JavaCameraView) findViewById(R.id.camera_view);
-        mCameraView.setCameraIndex(mCameraIndex);
-        mCameraView.setMaxFrameSize(size.width, size.height);
-        mCameraView.setCvCameraViewListener(this);
+        cameraView = (JavaCameraView) findViewById(R.id.camera_view);
+        cameraView.setCameraIndex(cameraIndex);
+        cameraView.setMaxFrameSize(size.width, size.height);
+        cameraView.setCvCameraViewListener(this);
     }
 
     /**
@@ -115,8 +124,8 @@ public class CameraActivity extends AppCompatActivity
      */
     @Override
     public void onPause() {
-        if (mCameraView != null) {
-            mCameraView.disableView();
+        if (cameraView != null) {
+            cameraView.disableView();
         }
         super.onPause();
     }
@@ -129,8 +138,8 @@ public class CameraActivity extends AppCompatActivity
     @Override
     public void onResume() {
         super.onResume();
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, this, mLoaderCallback);
-        mIsMenuLocked = false;
+        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, this, loaderCallback);
+        isMenuLocked = false;
     }
 
     /**
@@ -138,8 +147,8 @@ public class CameraActivity extends AppCompatActivity
      */
     @Override
     public void onDestroy() {
-        if (mCameraView != null) {
-            mCameraView.disableView();
+        if (cameraView != null) {
+            cameraView.disableView();
         }
         super.onDestroy();
     }
@@ -150,9 +159,11 @@ public class CameraActivity extends AppCompatActivity
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         // Save the current camera index
-        savedInstanceState.putInt(STATE_CAMERA_INDEX, mCameraIndex);
+        savedInstanceState.putInt(STATE_CAMERA_INDEX, cameraIndex);
         // Save the current image size index
-        savedInstanceState.putInt(STATE_IMAGE_SIZE_INDEX, mImageSizeIndex);
+        savedInstanceState.putInt(STATE_IMAGE_SIZE_INDEX, imageSizeIndex);
+        // Save the current bg algorithm
+        savedInstanceState.putInt(STATE_BR_ALG_INDEX, bgAlgIndex);
         super.onSaveInstanceState(savedInstanceState);
     }
 
@@ -164,15 +175,15 @@ public class CameraActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
         getMenuInflater().inflate(R.menu.activity_camera, menu);
-        if (mNumCameras < 2) {
+        if (numCameras < 2) {
             // Remove the option to switch cameras, since there is only 1
             menu.removeItem(R.id.menu_next_camera);
         }
-        int numSupportedImageSizes = mSupportedImageSizes.size();
+        int numSupportedImageSizes = supportedImageSizes.size();
         if (numSupportedImageSizes > 1) {
             final SubMenu sizeSubMenu = menu.addSubMenu(R.string.menu_image_size);
             for (int i = 0; i < numSupportedImageSizes; i++) {
-                final Size size = mSupportedImageSizes.get(i);
+                final Size size = supportedImageSizes.get(i);
                 sizeSubMenu.add(MENU_GROUP_ID_SIZE, i, Menu.NONE,
                         String.format(Locale.getDefault(), "%dx%d", size.width, size.height));
             }
@@ -189,23 +200,27 @@ public class CameraActivity extends AppCompatActivity
      * (for example, until onResume).
      */
     public boolean onOptionsItemSelected(final MenuItem item) {
-        if (mIsMenuLocked) {
+        if (isMenuLocked) {
             return true;
         }
         if (item.getGroupId() == MENU_GROUP_ID_SIZE) {
-            mImageSizeIndex = item.getItemId();
+            imageSizeIndex = item.getItemId();
+            recreate();
+            return true;
+        } else if (item.getGroupId() == R.id.bg_group) {
+            bgAlgIndex = item.getItemId();
             recreate();
             return true;
         }
         switch (item.getItemId()) {
             case R.id.menu_next_camera:
-                mIsMenuLocked = true;
+                isMenuLocked = true;
                 // With another camera index, recreate the activity
-                mCameraIndex++;
-                if (mCameraIndex == mNumCameras) {
-                    mCameraIndex = 0;
+                cameraIndex++;
+                if (cameraIndex == numCameras) {
+                    cameraIndex = 0;
                 }
-                mImageSizeIndex = 0;
+                imageSizeIndex = 0;
                 recreate();
                 return true;
             default:
@@ -215,7 +230,25 @@ public class CameraActivity extends AppCompatActivity
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-        videoProcessor = new MOG2Subtractor();
+        switch (bgAlgIndex) {
+            case R.id.bg_fd:
+                videoProcessor = new FrameDifferencing(width, height);
+                break;
+            case R.id.bg_avg:
+                videoProcessor = new AverageBackground();
+                break;
+            case R.id.bg_mog2:
+                videoProcessor = new MOG2Subtractor();
+                break;
+            case R.id.bg_knn:
+                videoProcessor = new KNNSubtractor();
+                break;
+            case R.id.bg_none:
+                videoProcessor = new NoneFilter();
+                break;
+            default:
+                videoProcessor = new NoneFilter();
+        }
     }
 
     @Override
@@ -226,7 +259,7 @@ public class CameraActivity extends AppCompatActivity
     @Override
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         final Mat currentImage = inputFrame.gray();
-        if (mIsCameraFrontFacing) {
+        if (isCameraFrontFacing) {
             // Mirror (horizontally flip) the preview
             Core.flip(currentImage, currentImage, 1);
         }

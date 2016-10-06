@@ -5,4 +5,28 @@
         android:id="@+id/menu_next_camera"
         android:title="@string/menu_next_camera"
         app:showAsAction="ifRoom|withText"/>
+    <item
+        android:id="@+id/bg"
+        android:title="@string/bs"
+        app:showAsAction="ifRoom|withText">
+        <menu>
+            <group android:id="@+id/bg_group">
+                <item
+                    android:id="@+id/bg_fd"
+                    android:title="@string/frame_differencing"/>
+                <item
+                    android:id="@+id/bg_avg"
+                    android:title="@string/average"/>
+                <item
+                    android:id="@+id/bg_mog2"
+                    android:title="@string/mog2"/>
+                <item
+                    android:id="@+id/bg_knn"
+                    android:title="@string/knn"/>
+                <item
+                    android:id="@+id/bg_none"
+                    android:title="@string/none"/>
+            </group>
+        </menu>
+    </item>
 </menu>
