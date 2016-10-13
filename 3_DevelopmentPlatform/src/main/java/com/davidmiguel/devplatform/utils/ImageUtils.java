@@ -38,6 +38,9 @@ public class ImageUtils {
      * @return JavaFX image
      */
     public static Image matToImage(Mat matrix) {
+        if (matrix == null || matrix.empty()) {
+            return null;
+        }
         MatOfByte buffer = new MatOfByte();
         Imgcodecs.imencode(".png", matrix, buffer);
         return new Image(new ByteArrayInputStream(buffer.toArray()));

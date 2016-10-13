@@ -1,14 +1,14 @@
-package com.davidmiguel.devplatform.filters.bgsub;
+package com.davidmiguel.devplatform.video.processors.bgsub;
 
-import com.davidmiguel.devplatform.filters.Filter;
+import com.davidmiguel.devplatform.video.processors.VideoProcessor;
 import org.opencv.core.Mat;
 import org.opencv.video.BackgroundSubtractorKNN;
 import org.opencv.video.Video;
 
 /**
- * Implments BackgroundSubtractorMOG2.
+ * Implments BackgroundSubtractorKNN.
  */
-public class KNNSubtractor implements Filter {
+public class KNNSubtractor implements VideoProcessor {
 
     private final static double LEARNING_RATE = 0.01;
 
@@ -17,6 +17,7 @@ public class KNNSubtractor implements Filter {
 
     public KNNSubtractor() {
         knn = Video.createBackgroundSubtractorKNN();
+        knn.setDetectShadows(false);
         foreground = new Mat();
     }
 
