@@ -20,6 +20,7 @@ public class MOG2Subtractor implements VideoProcessor {
     public MOG2Subtractor() {
         mog = Video.createBackgroundSubtractorMOG2();
         mog.setShadowValue(0); // Shadows as background
+        mog.setDetectShadows(false);
     }
 
     public Mat process(Mat inputImage) {

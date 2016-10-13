@@ -16,7 +16,7 @@ public class AverageBackground implements VideoProcessor {
     private Mat accumulatedBackground = new Mat();     // Accumulated bg in 32-bit floating point
     private Mat accumulatedBackground8U = new Mat();   // Accumulated bg in 8-bit unsigned
     private Mat difference = new Mat();                // Result image from absdiff
-    private final static double LEARNING_RATE = 0.001; // Learning reate
+    private final static double LEARNING_RATE = 0.1;   // Learning reate
     private final static int THRESHOLD = 30;           // Threshold
 
     @Override

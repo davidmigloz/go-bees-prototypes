@@ -232,7 +232,7 @@ public class CameraActivity extends AppCompatActivity
     public void onCameraViewStarted(int width, int height) {
         switch (bgAlgIndex) {
             case R.id.bg_fd:
-                videoProcessor = new FrameDifferencing(width, height);
+                videoProcessor = new FrameDifferencing();
                 break;
             case R.id.bg_avg:
                 videoProcessor = new AverageBackground();
