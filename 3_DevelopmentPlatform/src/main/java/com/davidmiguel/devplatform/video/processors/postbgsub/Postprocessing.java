@@ -6,6 +6,11 @@ import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
+/**
+ * Improve results from background subtraction.
+ * 1º Dilate.
+ * 2º Erode.
+ */
 public class Postprocessing implements VideoProcessor {
 
     private Mat tmp;
@@ -21,20 +26,22 @@ public class Postprocessing implements VideoProcessor {
         erodeImg = true;
         dilateImg = true;
         dilateKernelSize = 3;
-        erodeKernelSize = 4;
+        erodeKernelSize = 3;
         nDilate = 3;
-        nErode = 2;
+        nErode = 3;
     }
 
     @Override
     public Mat process(Mat inputImage) {
         inputImage.copyTo(tmp);
         if (dilateImg) {
+            dilate(tmp, 2, Imgproc.CV_SHAPE_ELLIPSE);
             for (int i = 0; i < nDilate; i++) {
                 dilate(tmp, dilateKernelSize, Imgproc.CV_SHAPE_ELLIPSE);
             }
         }
         if (erodeImg) {
+            erode(tmp, 1, Imgproc.CV_SHAPE_ELLIPSE);
             for (int i = 0; i < nErode; i++) {
                 erode(tmp, erodeKernelSize, Imgproc.CV_SHAPE_ELLIPSE);
             }
@@ -53,8 +60,7 @@ public class Postprocessing implements VideoProcessor {
     }
 
     private Mat getKernelFromShape(int elementSize, int elementShape) {
-        return Imgproc.getStructuringElement(elementShape,
-                new Size(elementSize * 2 + 1, elementSize * 2 + 1), new Point(elementSize, elementSize));
+        return Imgproc.getStructuringElement(elementShape, new Size(elementSize, elementSize));
     }
 
     public void activeDilate(boolean dilate, int kernelSize, int repetitions) {

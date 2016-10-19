@@ -20,7 +20,7 @@ public class Preprocessing implements VideoProcessor {
 
     public Preprocessing() {
         grayImg = new Mat();
-        equalizeHist = true;
+        equalizeHist = false;
         gaussianBlur = true;
         kernelSize = 3;
         nGaussianBlur = 2;

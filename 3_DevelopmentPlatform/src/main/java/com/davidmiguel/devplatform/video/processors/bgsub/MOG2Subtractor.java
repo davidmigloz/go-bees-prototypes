@@ -8,24 +8,20 @@ import org.opencv.video.BackgroundSubtractorMOG2;
 import org.opencv.video.Video;
 
 /**
- * Implments BackgroundSubtractorMOG2.
+ * Background substraction using BackgroundSubtractorMOG2.
  */
 public class MOG2Subtractor implements VideoProcessor {
-
-    private final static double LEARNING_RATE = 0.01;
 
     private BackgroundSubtractorMOG2 mog;
     private Mat foreground = new Mat();
 
     public MOG2Subtractor() {
-        mog = Video.createBackgroundSubtractorMOG2();
-        mog.setShadowValue(0); // Shadows as background
-        mog.setDetectShadows(false);
+        reset();
     }
 
     public Mat process(Mat inputImage) {
         if (!inputImage.empty()) {
-            mog.apply(inputImage, foreground, LEARNING_RATE);
+            mog.apply(inputImage, foreground);
 
             Mat structuringElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
             for (int i = 0; i < 1; i++) {
@@ -46,5 +42,13 @@ public class MOG2Subtractor implements VideoProcessor {
         mog.setVarThreshold(varThreshold);
         mog.setVarInit(varInit);
         mog.setVarMax(varInit * 5);
+    }
+
+    public void reset() {
+        mog = Video.createBackgroundSubtractorMOG2();
+        mog.setShadowValue(0); // Shadows as background
+        mog.setDetectShadows(false);
+        setConfig(50, 0.04, 40, 15);
+        setDetectShadows(true, 0.7);
     }
 }

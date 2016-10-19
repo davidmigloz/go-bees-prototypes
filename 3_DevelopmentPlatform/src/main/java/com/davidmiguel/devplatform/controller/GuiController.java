@@ -2,8 +2,8 @@ package com.davidmiguel.devplatform.controller;
 
 import com.davidmiguel.devplatform.utils.ImageUtils;
 import com.davidmiguel.devplatform.video.io.VideoPlayer;
-import com.davidmiguel.devplatform.video.processors.VideoProcessor;
 import com.davidmiguel.devplatform.video.processors.bgsub.MOG2Subtractor;
+import com.davidmiguel.devplatform.video.processors.contours.ContoursFinder;
 import com.davidmiguel.devplatform.video.processors.postbgsub.Postprocessing;
 import com.davidmiguel.devplatform.video.processors.prebgsub.Preprocessing;
 import javafx.animation.Animation;
@@ -33,6 +33,8 @@ public class GuiController {
     private Button restartBtn;
     @FXML
     private Label fps;
+    @FXML
+    private Label tTotal;
     @FXML
     private ImageView orgininalIV;
     @FXML
@@ -90,7 +92,19 @@ public class GuiController {
     private TextField nDilate;
     @FXML
     private TextField nErode;
-
+    // Contours
+    @FXML
+    private Tab contoursTab;
+    @FXML
+    private ImageView contoursIV;
+    @FXML
+    private Label tContours;
+    @FXML
+    private Label nBees;
+    @FXML
+    private TextField minArea;
+    @FXML
+    private TextField maxArea;
 
     // Video file
     private File input;
@@ -102,11 +116,13 @@ public class GuiController {
     // Video player
     private VideoPlayer player;
     // Preprocessing
-    private VideoProcessor preprocessing;
+    private Preprocessing preprocessing;
     // Background subtraction
-    private VideoProcessor bg;
+    private MOG2Subtractor bs;
     // Postprocesing
-    private VideoProcessor postprocessing;
+    private Postprocessing postprocessing;
+    // Contours
+    private ContoursFinder contours;
 
     @FXML
     private void initialize() {
@@ -122,13 +138,15 @@ public class GuiController {
         // Preprocessing
         preprocessing = new Preprocessing();
         // Background subtraction
-        bg = new MOG2Subtractor();
+        bs = new MOG2Subtractor();
         // Postprocesing
         postprocessing = new Postprocessing();
+        // Contours
+        contours = new ContoursFinder();
     }
 
     /**
-     * Select input file.
+     * Select input file and open it.
      */
     @FXML
     private void handleSelectInput() {
@@ -138,6 +156,7 @@ public class GuiController {
             input = f;
             inputFile.setText(input.toString().replace("\\", "/"));
         }
+        bs.reset(); // Reset background model
         player.open(input.getPath());
     }
 
@@ -187,23 +206,23 @@ public class GuiController {
     @FXML
     private void handleSave() {
         if (preprocessingTab.isSelected()) {
-            Preprocessing prp = (Preprocessing) preprocessing;
-            prp.activeEqualizeHist(equalizeHist.isSelected());
-            prp.activeGaussianBlur(gaussianBlur.isSelected(),
+            preprocessing.activeEqualizeHist(equalizeHist.isSelected());
+            preprocessing.activeGaussianBlur(gaussianBlur.isSelected(),
                     (int) blurKernelSize.getValue(), Integer.parseInt(nBlur.getText()));
         } else if (bsTab.isSelected()) {
-            MOG2Subtractor mog = (MOG2Subtractor) bg;
-            mog.setDetectShadows(detectShadows.isSelected(), Double.parseDouble(shadowsThreshold.getText()));
-            mog.setConfig(Integer.parseInt(history.getText()), Double.parseDouble(backgroundRatio.getText()),
+            bs.setDetectShadows(detectShadows.isSelected(), Double.parseDouble(shadowsThreshold.getText()));
+            bs.setConfig(Integer.parseInt(history.getText()), Double.parseDouble(backgroundRatio.getText()),
                     Double.parseDouble(varThreshold.getText()), Double.parseDouble(varInit.getText()));
         } else if (postprocessingTab.isSelected()) {
-            Postprocessing pop = (Postprocessing) postprocessing;
-            pop.activeDilate(dilateImg.isSelected(),
+            postprocessing.activeDilate(dilateImg.isSelected(),
                     (int) dilateKernelSize.getValue(), Integer.parseInt(nDilate.getText()));
-            pop.activeErode(erodeImg.isSelected(),
+            postprocessing.activeErode(erodeImg.isSelected(),
                     (int) erodeKernelSize.getValue(), Integer.parseInt(nErode.getText()));
+        } else if (contoursTab.isSelected()) {
+            contours.setAreaLimits(Integer.parseInt(minArea.getText()), Integer.parseInt(maxArea.getText()));
         }
         if (!playing) {
+            // Run next frame with the new config
             task.run();
         }
     }
@@ -213,41 +232,37 @@ public class GuiController {
      */
     private void setupTask() {
         task = () -> {
+            // Image procesing
             Mat frame = player.nextFrame();
             long t0 = System.currentTimeMillis();
             Mat frame1 = preprocessing.process(frame);
             long t1 = System.currentTimeMillis();
-            Mat frame2 = bg.process(frame1);
+            Mat frame2 = bs.process(frame1);
             long t2 = System.currentTimeMillis();
             Mat frame3 = postprocessing.process(frame2);
             long t3 = System.currentTimeMillis();
-
+            Mat frame4 = contours.process(frame3);
+            long t4 = System.currentTimeMillis();
+            // Show the result of each step
             setImgIV(orgininalIV, frame);
-            //if (preprocessingTab.isSelected()) {
             setImgIV(preprocessingIV, frame1);
-            //} else if (bsTab.isSelected()) {
             setImgIV(bsIV, frame2);
-            //} else if (postprocessingTab.isSelected()) {
             setImgIV(postprocessingIV, frame3);
-            //}
-
+            setImgIV(contoursIV, frame4);
             // Update metrics
-            updateTimes(t1 - t0, t2 - t1, t3 - t2);
+            updateBees(contours.getNumBees());
+            updateTimes(t1 - t0, t2 - t1, t3 - t2, t4 - t3);
             updateFps();
         };
     }
 
     /**
-     * Setup rendering loop (20hz).
+     * Setup rendering loop (10hz).
      */
     private void setupRenderingLoop() {
         tl = new Timeline();
         tl.setCycleCount(Animation.INDEFINITE);
-        KeyFrame frame = new KeyFrame(Duration.millis(67), event -> {
-            // Run task
-            task.run();
-        });
-
+        KeyFrame frame = new KeyFrame(Duration.millis(100), event -> task.run());
         tl.getKeyFrames().add(frame);
     }
 
@@ -261,13 +276,22 @@ public class GuiController {
     }
 
     /**
+     * Update number of bees.
+     */
+    private void updateBees(int num) {
+        Platform.runLater(() -> nBees.setText(Integer.toString(num)));
+    }
+
+    /**
      * Update the execution times.
      */
-    private void updateTimes(long preprocessing, long bs, long postprocessing) {
+    private void updateTimes(long preprocessing, long bs, long postprocessing, long contours) {
         Platform.runLater(() -> {
             tPreprocessing.setText(Long.toString(preprocessing));
             tBS.setText(Long.toString(bs));
             tPostprocessing.setText(Long.toString(postprocessing));
+            tContours.setText(Long.toString(contours));
+            tTotal.setText(Long.toString(preprocessing + bs + postprocessing + contours));
         });
     }
 
