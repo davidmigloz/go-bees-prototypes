@@ -2,7 +2,6 @@ package com.davidmiguel.devplatform.video.processors.postbgsub;
 
 import com.davidmiguel.devplatform.video.processors.VideoProcessor;
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
@@ -34,6 +33,9 @@ public class Postprocessing implements VideoProcessor {
     @Override
     public Mat process(Mat inputImage) {
         inputImage.copyTo(tmp);
+
+        erode(tmp, erodeKernelSize, Imgproc.CV_SHAPE_RECT);
+
         if (dilateImg) {
             dilate(tmp, 2, Imgproc.CV_SHAPE_ELLIPSE);
             for (int i = 0; i < nDilate; i++) {

@@ -13,7 +13,7 @@ import java.util.*;
 
 /**
  * Contours are connected curves in an image or boundaries of connected components in an image.
- * This class find and mark them.
+ * This class finds and marks them.
  */
 public class ContoursFinder implements VideoProcessor {
 
@@ -35,7 +35,6 @@ public class ContoursFinder implements VideoProcessor {
         hierarchy = new Mat();
         minArea = 15;
         maxArea = 600;
-        numBees = 0;
     }
 
     @Override

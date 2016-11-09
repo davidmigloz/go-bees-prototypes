@@ -1,10 +1,10 @@
 package com.davidmiguel.backgroundsub;
 
 import android.hardware.Camera;
-import android.hardware.Camera.Size;
 import android.hardware.Camera.CameraInfo;
-import android.support.v7.app.AppCompatActivity;
+import android.hardware.Camera.Size;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;

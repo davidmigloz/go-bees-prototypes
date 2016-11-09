@@ -16,5 +16,7 @@ App based on 1_CameraFeed that implements four subtraction algorithms:
 - KNNSubtractor
 
 #### 3_DevelopmentPlatform
-Java app to speed up the development of the GoBees's computer vision algoritms.
-The main advantage is that we can read a video from a file, instead of reading always the camera feed (this cannot be done in OpenCV4Android 3.1.0).
+Java app to speed up the development of the GoBees's computer vision algorithms. It allows to easily parameterize all the steps of the algorithm.
+
+#### 3_CountingPlatform
+Java app to manually count bees from a dataset of frames. It saves the results in a `numbees.txt` file that later can be used to test the bee counter algorithm.

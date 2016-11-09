@@ -22,11 +22,6 @@ public class MOG2Subtractor implements VideoProcessor {
     public Mat process(Mat inputImage) {
         if (!inputImage.empty()) {
             mog.apply(inputImage, foreground);
-
-            Mat structuringElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
-            for (int i = 0; i < 1; i++) {
-                Imgproc.erode(foreground, foreground, structuringElement);
-            }
         }
         return foreground;
     }
