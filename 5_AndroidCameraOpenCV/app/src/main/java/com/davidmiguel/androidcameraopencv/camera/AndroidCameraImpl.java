@@ -85,6 +85,10 @@ public class AndroidCameraImpl implements AndroidCamera, Camera.PreviewCallback 
     @Override
     public void release() {
         synchronized (this) {
+            // Stop task
+            timer.cancel();
+            timer = null;
+            takePhotoTask = null;
             // Release thread
             mThread.interrupt();
             // Release camera
