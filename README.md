@@ -23,3 +23,6 @@ Java app to manually count bees from a dataset of frames. It saves the results i
 
 #### 5_AndroidCameraOpenCV
 Android Camera implementation that retrieves the frames in OpenCV `Mat` format.
+
+#### 6_OpenWeatherMap
+Simple Android app that gets weather data from OpenWeatherMap.org API.
