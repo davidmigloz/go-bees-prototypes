@@ -18,8 +18,16 @@ App based on 1_CameraFeed that implements four subtraction algorithms:
 #### 3_DevelopmentPlatform
 Java app to speed up the development of the GoBees's computer vision algorithms. It allows to easily parameterize all the steps of the algorithm.
 
+> [developmentplatform.v1.jar](https://github.com/davidmigloz/go-bees-prototypes/releases/download/v1/developmentplatform.v1.jar)
+
+![DevelopmentPlatform](http://go-bees.readthedocs.io/es/develop/_images/devplatform1.png)
+
 #### 4_CountingPlatform
 Java app to manually count bees from a dataset of frames. It saves the results in a `numbees.txt` file that later can be used to test the bee counter algorithm.
+
+> [countingplatform.v1.jar](https://github.com/davidmigloz/go-bees-prototypes/releases/download/v1/countingplatform.v1.jar)
+
+![CountingPlatform](http://go-bees.readthedocs.io/es/develop/_images/counting_platform1.png)
 
 #### 5_AndroidCameraOpenCV
 Android Camera implementation that retrieves the frames in OpenCV `Mat` format.
